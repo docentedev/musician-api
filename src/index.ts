@@ -17,6 +17,7 @@ fastify.register(require('@fastify/postgres'), {
   connectionString: process.env.DATABASE_URL
 })
 
+fastify.register(require('./routes/health'), { prefix: 'api/v1/health' })
 fastify.register(require('./routes/files'), { prefix: 'api/v1/files' })
 fastify.register(require('./routes/musicians'), { prefix: 'api/v1/musicians' })
 fastify.register(citiesRoute, { prefix: 'api/v1/cities' })
