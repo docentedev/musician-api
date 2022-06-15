@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@fastify/cors": "^8.0.0",
+    "@fastify/jwt": "^6.1.0",
     "@fastify/multipart": "^7.1.0",
     "@fastify/postgres": "^4.0.1",
     "dotenv": "^16.0.1",

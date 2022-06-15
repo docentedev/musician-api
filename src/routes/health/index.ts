@@ -1,7 +1,7 @@
-import { FastifyInstance, UserRequest } from 'fastify'
+import { FastifyInstance, CustomRequest } from 'fastify'
 
 const routes = async (fastify: FastifyInstance, _opts: any, done: Function) => {
-  fastify.get('/', async (req: UserRequest, reply) => {
+  fastify.get('/', async (req: CustomRequest, reply) => {
     const data = {
       uptime: process.uptime(),
       message: 'Ok',

@@ -8,18 +8,6 @@ type GetAllPaginateProps = {
     sort: 'asc' | 'desc'
 }
 
-type Musician = {
-    id?: string
-    first_name: string
-    last_name: string
-    second_last_name?: string
-    second_name?: string
-    birth_date: Date
-    death_date: Date
-    city_fk: number
-    alias: string
-} & IMutation
-
 const musicians = (pg: pg.Pg) => {
   const fields = ['first_name', 'last_name', 'second_last_name', 'second_name', 'birth_date', 'death_name', 'city_fk', 'alias']
   const qb = initQueryBuilder({

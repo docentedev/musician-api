@@ -150,7 +150,7 @@ declare module 'fastify' {
         }>
     }
 
-    type UserRequest = FastifyRequest<{
+    type CustomRequest = FastifyRequest<{
         Params: { id: number }
         Querystring: { page?: number, size?: number, sort?: 'asc' | 'desc', order?: string, q?: string }
     }>

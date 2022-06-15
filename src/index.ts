@@ -1,10 +1,20 @@
 import Fastify from 'fastify'
+const jwt = require('@fastify/jwt')
 import citiesRoute from './routes/cities'
 require('dotenv').config()
 
 const PORT = process.env.PORT || 3001
 const fastify = Fastify({
   logger: true
+})
+
+fastify.register(jwt, {
+  decode: { complete: true },
+  secret: {
+    private: process.env.PRIVATE_KEY,
+    public: process.env.PUBLIC_KEY
+  },
+  sign: { algorithm: 'RS256' }
 })
 
 fastify.register(require('@fastify/multipart'), {
