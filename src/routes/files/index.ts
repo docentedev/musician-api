@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import getContentType from '../../utils/getContentType'
 import musiciansDb from '../../models/musicians'
+import Auth from '../../utils/Auth'
 
 const fs = require('fs')
 const util = require('util')
@@ -11,6 +12,7 @@ const pump = util.promisify(pipeline)
 const routes = async (instance: FastifyInstance, opts: any, done: () => void) => {
   const qb = musiciansDb(instance.pg)
   instance.post('/', {
+    preHandler: [Auth.middleware(instance)],
     handler: async (req: any, reply: any) => {
       const file = await req.file()
       const uploadPath = path.join(__dirname, '../../../../uploads')
