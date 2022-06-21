@@ -1,27 +1,27 @@
 interface QueryBuilderProps {
-  table: string;
-  as?: string[];
-  select?: string;
-  fields: string[];
-  run?: (sql: string, values: any[], single: Boolean) => Promise<any>;
-  debug?: boolean;
-  mutationFields?: string[];
+  table: string
+  as?: string[]
+  select?: string
+  fields: string[]
+  run?: (sql: string, values: any[], single: Boolean) => Promise<any>
+  debug?: boolean
+  mutationFields?: string[]
 }
 
 type InnerJoinProps = {
   join: string
   on: string
-};
+}
 
 type Mode = 'LIKE' | 'ILIKE' | 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE' | 'IN' | 'NOTIN' | 'BETWEEN' | 'NOTBETWEEN' | '=' | '!=' | '>' | '<' | '>=' | '<=' | 'IN' | 'NOT IN'
 type SearchItem = {
-  field: string;
-  value?: any;
+  field: string
+  value?: any
   mode?: Mode
-  operator?: 'AND' | 'OR';
-};
+  operator?: 'AND' | 'OR'
+}
 
-type OrderProp = 'ASC' | 'DESC' | 'asc' | 'desc';
+type OrderProp = 'ASC' | 'DESC' | 'asc' | 'desc'
 
 const modeOpts = ['LIKE', 'ILIKE', 'EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE', 'IN', 'NOTIN', 'BETWEEN', 'NOTBETWEEN', '=', '!=', '>', '<', '>=', '<=', 'IN', 'NOT IN']
 const operatorOpts = ['AND', 'OR']
@@ -36,13 +36,13 @@ class QueryBuilder {
   #sqlSelect: string[] = []
   #sqlAlias: { [key: string]: string } = {}
   // #sqlSelectAlias: { [key: string]: string } = {}
-  #sqlFields: { table: string; field: string }[] = []
+  #sqlFields: { table: string, field: string }[] = []
   #sqlValues: any[] = []
   #sqlOrderDirections = ['ASC', 'DESC']
   #sqlRun?: (sql: string, values: any[], single: Boolean) => Promise<any>
   #debug: boolean = false
   #isSingleResult = false
-  #sqlMutateFields: { table: string; field: string }[] = []
+  #sqlMutateFields: { table: string, field: string }[] = []
   constructor({
     table,
     as = [],
@@ -130,7 +130,7 @@ class QueryBuilder {
   }
 
   #parseField(field: string) {
-    const item: { table: string; field: string, tableName: string } = { table: '', field: '', tableName: '' }
+    const item: { table: string, field: string, tableName: string } = { table: '', field: '', tableName: '' }
     const isUnderscores = field.includes('__')
     const isDot = field.includes('.')
     const isSingleField = !(isDot || isUnderscores)
@@ -145,7 +145,7 @@ class QueryBuilder {
   }
 
   #parseFields(fields: string[]) {
-    const items: { table: string; field: string }[] = []
+    const items: { table: string, field: string }[] = []
     fields.forEach((item) => {
       const parsedItem = this.#parseField(item)
       items.push(parsedItem)
@@ -154,7 +154,7 @@ class QueryBuilder {
   }
 
   // return true if this field is valid or generate an Fatal Error
-  #checkBaseField(table: string, field: string, allowedFields: { table: string; field: string }[] = []) {
+  #checkBaseField(table: string, field: string, allowedFields: { table: string, field: string }[] = []) {
     const findCallback = (i: any) => i.table === table && i.field === field
     const isField = allowedFields.find(findCallback)
     if (!isField) {
@@ -238,6 +238,27 @@ class QueryBuilder {
     return this
   }
 
+  whereIn(field: string, values: any[]) {
+    this.#sqlText += ' WHERE'
+
+    const { table, field: fieldName } = this.#parseField(field)
+    this.#checkField(table, fieldName)
+
+    const tableField = this.#sqlMutation ? fieldName : `${table}.${fieldName}`
+    this.#sqlText += ` ${tableField}`
+  
+    const valuesString: string[] = []
+    this.#sqlText += ` IN (`
+    values.forEach((value: any) => {
+      this.#sqlValues.push(value)
+      const i = this.#sqlValues.length
+      valuesString.push(`$${i}`)
+    })
+    this.#sqlText += valuesString.join(',')
+    this.#sqlText += `)`
+
+    return this
+  }
   /**
      * search
      * @param fields fields to search
@@ -292,11 +313,14 @@ class QueryBuilder {
 
       const percent = ['LIKE', 'ILIKE'].includes(mode) ? "'%'" : ''
       const orSymbol = ['LIKE', 'ILIKE'].includes(mode) ? ' || ' : ''
-      this.#sqlText += ` ${table}.${field} ${mode} ${percent}${orSymbol}$${valuesLen}${orSymbol}${percent}`
+      const tableField = this.#sqlMutation ? field : `${table}.${field}`
+
+      this.#sqlText += ` ${tableField} ${mode} ${percent}${orSymbol}$${valuesLen}${orSymbol}${percent}`
       if (index < itemsLen - 1) {
         this.#sqlText += ` ${op}`
       }
-      if (this.#sqlDelete) {
+      if (this.#sqlDelete || this.#sqlMutation) {
+        this.#sqlMutation = false
         this.#sqlText += ' RETURNING *'
       }
       return this

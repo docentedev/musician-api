@@ -26,7 +26,7 @@ const routes = (fastify: FastifyInstance, opts: any, next: () => void) => {
   })
 
   fastify.delete('/:id', {
-    preHandler: [Auth.middleware(fastify)],
+    preHandler: [Auth.rolesMiddleware(fastify, ['admin'])],
     handler: async (req: CustomRequest, reply) => {
       try {
         const result = await qb.deleteById(req.params.id)
@@ -38,7 +38,7 @@ const routes = (fastify: FastifyInstance, opts: any, next: () => void) => {
   })
 
   fastify.put('/:id', {
-    preHandler: [Auth.middleware(fastify)],
+    preHandler: [Auth.rolesMiddleware(fastify, ['admin'])],
     handler: async (req: CustomRequest, reply) => {
       try {
         const result = await qb.update(req.params.id, req.body)
@@ -50,11 +50,10 @@ const routes = (fastify: FastifyInstance, opts: any, next: () => void) => {
   })
 
   fastify.post('/', {
-    preHandler: [Auth.middleware(fastify)],
+    preHandler: [Auth.rolesMiddleware(fastify, ['admin'])],
     handler: async (req: CustomRequest, reply) => {
       try {
         const result = await qb.insert(req.body)
-        // 201 Created
         reply.code(201).send(result)
       } catch (error) {
         reply.send(error)

@@ -9,10 +9,10 @@ const path = require('path')
 const { pipeline } = require('stream')
 const pump = util.promisify(pipeline)
 
-const routes = async (instance: FastifyInstance, opts: any, done: () => void) => {
-  const qb = musiciansDb(instance.pg)
-  instance.post('/', {
-    preHandler: [Auth.middleware(instance)],
+const routes = async (fastify: FastifyInstance, opts: any, done: () => void) => {
+  const qb = musiciansDb(fastify.pg)
+  fastify.post('/', {
+    preHandler: [Auth.rolesMiddleware(fastify, ['admin'])],
     handler: async (req: any, reply: any) => {
       const file = await req.file()
       const uploadPath = path.join(__dirname, '../../../../uploads')
@@ -21,16 +21,25 @@ const routes = async (instance: FastifyInstance, opts: any, done: () => void) =>
       const id = file.fields.id.value
       const filePath = path.join(uploadPath, `${id}${ext}`)
 
+      // update musician image
+      const { image: prevImage } = await qb.getBy('id', id)
+      // remove previous image
+      if (prevImage) {
+        try {
+          fs.unlinkSync(path.join(uploadPath, prevImage))
+        } catch (error) {
+          console.log(error)
+        }
+      }
       console.log(file.fields.id.value)
       console.log(file)
       await pump(file.file, fs.createWriteStream(filePath))
-      // update musician image
       const result = await qb.updateImage(id, `${id}${ext}`)
       reply.send(result)
     }
   })
 
-  instance.get('/:filename', {
+  fastify.get('/:filename', {
     handler: async (req: any, reply: any) => {
       const filename = req.params.filename
       const uploadPath = path.join(__dirname, '../../../../uploads')
